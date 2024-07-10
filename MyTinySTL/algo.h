@@ -526,8 +526,10 @@ ForwardIter adjacent_find(ForwardIter first, ForwardIter last, Compared comp)
 /*****************************************************************************************/
 // lower_bound
 // 在[first, last)中查找第一个不小于 value 的元素，并返回指向它的迭代器，若没有则返回 last
+// 已经假设元素有序
 /*****************************************************************************************/
 // lbound_dispatch 的 forward_iterator_tag 版本
+// 前向迭代器无法随机访问 因此必须用advance推进迭代器
 template <class ForwardIter, class T>
 ForwardIter
 lbound_dispatch(ForwardIter first, ForwardIter last,
@@ -538,17 +540,19 @@ lbound_dispatch(ForwardIter first, ForwardIter last,
   ForwardIter middle;
   while (len > 0)
   {
-    half = len >> 1;
+    half = len >> 1;//每次二分
     middle = first;
     mystl::advance(middle, half);//要设置middle的值最终为first+half 注意前向迭代器和随机迭代器的区别
     if (*middle < value)
     {
+	    // 在middle之后找
       first = middle;
       ++first;
       len = len - half - 1;
     }
     else
     {
+	    //在middle之前找
       len = half;
     }
   }
@@ -800,6 +804,7 @@ bool binary_search(ForwardIter first, ForwardIter last, const T& value, Compared
 // equal_range
 // 查找[first,last)区间中与 value 相等的元素所形成的区间，返回一对迭代器指向区间首尾
 // 第一个迭代器指向第一个不小于 value 的元素，第二个迭代器指向第一个大于 value 的元素
+// 也就是二分搜索法查找元素的左右边界那个方法
 /*****************************************************************************************/
 // erange_dispatch 的 forward_iterator_tag 版本
 template <class ForwardIter, class T>
@@ -979,6 +984,7 @@ void generate_n(ForwardIter first, Size n, Generator gen)
 /*****************************************************************************************/
 // includes
 // 判断序列一S1 是否包含序列二S2
+// 默认元素有序
 /*****************************************************************************************/
 template <class InputIter1, class InputIter2>
 bool includes(InputIter1 first1, InputIter1 last1,
@@ -1028,6 +1034,7 @@ bool includes(InputIter1 first1, InputIter1 last1,
 /*****************************************************************************************/
 // is_heap
 // 检查[first, last)内的元素是否为一个堆，如果是，则返回 true
+// 默认大根堆
 /*****************************************************************************************/
 template <class RandomIter>
 bool is_heap(RandomIter first, RandomIter last)
@@ -1038,6 +1045,9 @@ bool is_heap(RandomIter first, RandomIter last)
   {
     if (first[parent] < first[child])
       return false;
+		// child & 1 为 0 表示 child 是右子节点
+		// child & 1 为 1 表示 child 是左子节点
+		// 因为堆是完全二叉树 我们将根节点的索引设为0 那么后续左节点就是奇数 右节点就是偶数 偶数的二进制表示中最后一位一定是0
     if ((child & 1) == 0)
       ++parent;
   }
