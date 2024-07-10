@@ -22,6 +22,7 @@ namespace mystl
 /*****************************************************************************************/
 // all_of
 // 检查[first, last)内是否全部元素都满足一元操作 unary_pred 为 true 的情况，满足则返回 true
+//unary_pred 一个术语，代表一个一元操作 就是用来判断是不是符合条件的 符合条件则为true
 /*****************************************************************************************/
 template <class InputIter, class UnaryPredicate>
 bool all_of(InputIter first, InputIter last, UnaryPredicate unary_pred)
@@ -37,6 +38,7 @@ bool all_of(InputIter first, InputIter last, UnaryPredicate unary_pred)
 /*****************************************************************************************/
 // any_of
 // 检查[first, last)内是否存在某个元素满足一元操作 unary_pred 为 true 的情况，满足则返回 true
+//unary_pred 一个术语，通常指代一个接受单个参数并返回布尔值的函数对象或谓词 就是用来判断是不是符合条件的 符合条件则为true
 /*****************************************************************************************/
 template <class InputIter, class UnaryPredicate>
 bool any_of(InputIter first, InputIter last, UnaryPredicate unary_pred)
@@ -101,7 +103,7 @@ size_t count_if(InputIter first, InputIter last, UnaryPredicate unary_pred)
 // 在[first, last)区间内找到等于 value 的元素，返回指向该元素的迭代器
 /*****************************************************************************************/
 template <class InputIter, class T>
-InputIter
+InputIter //这是函数的返回类型
 find(InputIter first, InputIter last, const T& value)
 {
   while (first != last && *first != value)
@@ -144,7 +146,7 @@ ForwardIter1
 search(ForwardIter1 first1, ForwardIter1 last1,
        ForwardIter2 first2, ForwardIter2 last2)
 {
-  auto d1 = mystl::distance(first1, last1);
+  auto d1 = mystl::distance(first1, last1);//计算元素个数
   auto d2 = mystl::distance(first2, last2);
   if (d1 < d2)
     return last1;
@@ -152,22 +154,25 @@ search(ForwardIter1 first1, ForwardIter1 last1,
   auto current2 = first2;
   while (current2 != last2)
   {
+//元素相等 两个指针都向后走判断后面等不等
     if (*current1 == *current2)
     {
       ++current1;
       ++current2;
     }
-    else
+    else//元素不相等
     {
+	    //当前迭代器指向的元素不相等的时,如果两个容器的元素个数相同 第一个元素都不相等了 那肯定找不到匹配的了 直接返回
       if (d1 == d2)
       {
         return last1;
       }
       else
       {
+	      //从下一个元素开始找是否能找到容器2中的元素 此时容器2的迭代器复原
         current1 = ++first1;
         current2 = first2;
-        --d1;
+        --d1;//都从下一个元素开始匹配了 所以可以用来匹配的元素个数--
       }
     }
   }
@@ -175,6 +180,7 @@ search(ForwardIter1 first1, ForwardIter1 last1,
 }
 
 // 重载版本使用函数对象 comp 代替比较操作
+//comp(x1,x2) 如果x1<x2 返回值>0
 template <class ForwardIter1, class ForwardIter2, class Compared>
 ForwardIter1
 search(ForwardIter1 first1, ForwardIter1 last1,
@@ -224,7 +230,7 @@ search_n(ForwardIter first, ForwardIter last, Size n, const T& value)
   }
   else
   {
-    first = mystl::find(first, last, value);
+    first = mystl::find(first, last, value);//找到第一个匹配元素的迭代器
     while (first != last)
     {
       auto m = n - 1;
@@ -239,9 +245,9 @@ search_n(ForwardIter first, ForwardIter last, Size n, const T& value)
       {
         return first;
       }
-      else
+      else//没有找到n个连续的value
       {
-        first = mystl::find(i, last, value);
+        first = mystl::find(i, last, value);//那么从i开始继续找n个连续的value
       }
     }
     return last;
@@ -317,40 +323,42 @@ find_end_dispatch(ForwardIter1 first1, ForwardIter1 last1,
     {
       // 利用 search 查找某个子序列的首次出现点，找不到则返回 last1
       auto new_result = mystl::search(first1, last1, first2, last2);
-      if (new_result == last1)
+      if (new_result == last1)//没找到第一次出现的地方 更别说最后一次
       {
         return result;
       }
       else
-      {
+      {//关键代码在于这里 而且这个函数还用到了前面实现的函数 找第一次出现的地方
         result = new_result;
         first1 = new_result;
-        ++first1;
+        ++first1;//从第一次出现的地方的下一个元素开始继续递归寻找
       }
     }
   }
 }
 
-// find_end_dispatch 的 bidirectional_iterator_tag 版本
+// find_end_dispatch 的 bidirectional_iterator_tag 版本 双向迭代器
 template <class BidirectionalIter1, class BidirectionalIter2>
 BidirectionalIter1
 find_end_dispatch(BidirectionalIter1 first1, BidirectionalIter1 last1,
                   BidirectionalIter2 first2, BidirectionalIter2 last2,
                   bidirectional_iterator_tag, bidirectional_iterator_tag)
 {
-  typedef reverse_iterator<BidirectionalIter1> reviter1;
+  typedef reverse_iterator<BidirectionalIter1> reviter1; //定义双向迭代器的反向迭代器
   typedef reverse_iterator<BidirectionalIter2> reviter2;
-  reviter1 rlast1(first1);
+  reviter1 rlast1(first1);//初始化反向迭代器
   reviter2 rlast2(first2);
-  reviter1 rresult = mystl::search(reviter1(last1), rlast1, reviter2(last2), rlast2);
+//下面的代码总的来说就是 fistt1 lastt1 first2 last2 的反向迭代
+  reviter1 rresult = mystl::search(reviter1(last1), rlast1, reviter2(last2), rlast2);//reviter1(last1)也就是以last1开始向前的反向迭代器
   if (rresult == rlast1)
   {
     return last1;
   }
   else
   {
+	  // 反向迭代器中的 base 函数返回的迭代器实际上是指向反向迭代器当前指向元素的正向迭代的下一个位置 也就是转为正向迭代器了
     auto result = rresult.base();
-    mystl::advance(result, -mystl::distance(first2, last2));
+    mystl::advance(result, -mystl::distance(first2, last2));//advance用于将指定迭代器 向前/后 移动多少个元素
     return result;
   }
 }
@@ -525,14 +533,14 @@ ForwardIter
 lbound_dispatch(ForwardIter first, ForwardIter last,
                 const T& value, forward_iterator_tag)
 {
-  auto len = mystl::distance(first, last);
+  auto len = mystl::distance(first, last);//在前向迭代器版本中计算元素个数需要调用distance 
   auto half = len;
   ForwardIter middle;
   while (len > 0)
   {
     half = len >> 1;
     middle = first;
-    mystl::advance(middle, half);
+    mystl::advance(middle, half);//要设置middle的值最终为first+half 注意前向迭代器和随机迭代器的区别
     if (*middle < value)
     {
       first = middle;
@@ -553,7 +561,7 @@ RandomIter
 lbound_dispatch(RandomIter first, RandomIter last,
                 const T& value, random_access_iterator_tag)
 {
-  auto len = last - first;
+  auto len = last - first;//在随机访问迭代器版本中元素个数可以直接进行相减 不用像指针那样必须逐步++
   auto half = len;
   RandomIter middle;
   while (len > 0)
@@ -577,10 +585,10 @@ template <class ForwardIter, class T>
 ForwardIter
 lower_bound(ForwardIter first, ForwardIter last, const T& value)
 {
-  return mystl::lbound_dispatch(first, last, value, iterator_category(first));
+  return mystl::lbound_dispatch(first, last, value, iterator_category(first));//根据不同的迭代器类型调用对应的方法
 }
 
-// 重载版本使用函数对象 comp 代替比较操作
+// 重载版本使用函数对象 comp 代替比较操作  
 // lbound_dispatch 的 forward_iterator_tag 版本
 template <class ForwardIter, class T, class Compared>
 ForwardIter
